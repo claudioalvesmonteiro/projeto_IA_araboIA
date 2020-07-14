@@ -16,7 +16,7 @@ from imblearn.over_sampling import RandomOverSampler
 #Carregando a base
 #É necessário fazer o download da base no kaggle e dar o upload no collab
 #Link da base: https://www.kaggle.com/dipam7/student-grade-prediction
-base = pd.read_csv('student-mat.csv', sep=',')
+base = pd.read_csv('data/student-mat.csv', sep=',')
 
 #Drop em variáveis que não serão utilizadas
 base = base.drop(['school', 'sex', 'age', 'address', 'famsize', 'Pstatus', 'Medu', 'Fedu', 'Mjob', 'Fjob', 'reason', 'guardian', 'Dalc', 'Walc', 'G1', 'G2'], axis=1)
