@@ -50,12 +50,10 @@ y_train_df = pd.DataFrame(
 train = pd.concat([x_train_df, y_train_df], axis=1, sort=False)
 
 #Colocando ruído na base de treino
-for column in train:
-    train.at[random.randint(0, len(train[column])), column] = None
-    train.at[random.randint(0, len(train[column])), column] = None
+#for column in train:
+#    train.at[random.randint(0, len(train[column])), column] = None
+#    train.at[random.randint(0, len(train[column])), column] = None
 
-print(train)
-train.to_csv('train.csv')
 
 #Desenvolvendo a base de testes
 x_test_df = pd.DataFrame(
@@ -68,5 +66,58 @@ y_test_df = pd.DataFrame(
 
 test = pd.concat([x_test_df, y_test_df], axis=1, sort=False)
 
-print(test)
-test.to_csv('test.csv')
+
+#==================================
+# selecionar e renomear colunas
+#==================================
+
+# test
+test.drop(['famsup','schoolsup', 'nursery', 'romantic', 'famrel', 'failures', 'paid'], axis=1, inplace=True)
+test.columns =['tempo_ate_escola', 'tempo_de_estudo', 'atividades_extra_curriculares', 'quer_entrar_na_universidade',  'internet_casa', 'tempo_livre_depois_escola', 'sai_com_amigos', 'estado_saude', 'numero_de_faltas','aprovacao']
+test.to_csv('teste.csv')
+test_x = test[['tempo_ate_escola', 'tempo_de_estudo', 'atividades_extra_curriculares', 'quer_entrar_na_universidade',  'internet_casa', 'tempo_livre_depois_escola', 'sai_com_amigos', 'estado_saude', 'numero_de_faltas']]
+test_y = test['aprovacao']
+
+# train
+train.drop(['famsup','schoolsup', 'nursery', 'romantic', 'famrel', 'failures', 'paid'], axis=1, inplace=True)
+train.columns =['tempo_ate_escola', 'tempo_de_estudo', 'atividades_extra_curriculares', 'quer_entrar_na_universidade', 'internet_casa', 'tempo_livre_depois_escola', 'sai_com_amigos', 'estado_saude', 'numero_de_faltas','aprovacao']
+train.to_csv('treino.csv')
+train_x = train[['tempo_ate_escola', 'tempo_de_estudo', 'atividades_extra_curriculares', 'quer_entrar_na_universidade',  'internet_casa', 'tempo_livre_depois_escola', 'sai_com_amigos', 'estado_saude', 'numero_de_faltas']]
+train_y = train['aprovacao']
+
+
+def modelExperiments(train_x, train_y, test_x, test_y, model):
+    acc_shots = []
+    from sklearn.metrics import confusion_matrix
+    while len(acc_shots) < 100:
+        # choose model
+        if model == 'tree':
+            from sklearn import tree
+            clf = tree.DecisionTreeClassifier()
+        elif model == 'forest':
+            from sklearn.ensemble import RandomForestClassifier
+            clf = RandomForestClassifier(max_depth=2, random_state=0)
+        elif model == 'ann':
+            from sklearn.neural_network import MLPClassifier
+            clf = MLPClassifier(solver='lbfgs', alpha=1e-5,
+                                hidden_layer_sizes=(12, 20), random_state=1)
+        # execute model
+        clf = clf.fit(train_x, train_y)
+        predicted=clf.predict(test_x)
+        vp, fn, fp, vn = confusion_matrix(test_y, predicted, labels=[1,0]).reshape(-1)
+        acuracia = (vp+vn) / (vp+fn+fp+vn)
+        acc_shots.append(acuracia)
+    return acc_shots
+
+
+tree =  modelExperiments(train_x, train_y, test_x, test_y, 'tree')
+forest =  modelExperiments(train_x, train_y, test_x, test_y, 'forest')
+ann =  modelExperiments(train_x, train_y, test_x, test_y, 'ann')
+
+results_experiments = pd.DataFrame({'decision_tree':tree, 'random_forest':forest, 'artificial_neural_network':ann})
+
+results_experiments.to_csv('results_experiments.csv')
+
+results_experiments['decision_tree'].mean()
+results_experiments['random_forest'].mean()
+results_experiments['artificial_neural_network'].mean()
